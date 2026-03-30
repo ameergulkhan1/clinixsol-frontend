@@ -1,0 +1,36 @@
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  background: #f8f9fa;
+}
+
+.dashboard-main {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  min-height: calc(100vh - 70px);
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 2rem;
+  background: #f8f9fa;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 100%;
+  width: 100%;
+}
+
+/* Ensure content is visible */
+.dashboard-content > * {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,54 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Production
+/build
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Markdown files in the root
+/*.md
+
+# Log files
+/logs
+/data
+/log
+*.log
+
+# ML Service directory
+/ml-service/
+
+# Archive files
+/src/archive (1)/
+/src/archive (2)/
+
+# Configuration files
+/src/config/firebase.config.js
+/src/config/api.config.js
+
+# Batch and shell scripts
+*.bat
+*.sh
+*.ps1

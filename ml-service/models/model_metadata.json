@@ -1,0 +1,13 @@
+{
+  "trained_at": "2026-03-03T14:27:59.542945",
+  "n_symptoms": 133,
+  "n_diseases": 41,
+  "n_training_samples": 4920,
+  "n_testing_samples": 42,
+  "model_type": "RandomForestClassifier",
+  "model_params": {
+    "n_estimators": 200,
+    "max_depth": 20,
+    "min_samples_split": 5
+  }
+}
