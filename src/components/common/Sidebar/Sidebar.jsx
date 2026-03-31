@@ -52,6 +52,22 @@ const Sidebar = () => {
       { path: '/pharmacy/reports', label: 'Reports', icon: '📈' },
       { path: '/pharmacy/settings', label: 'Settings', icon: '⚙️' },
     ],
+    lab: [
+      { path: '/lab/dashboard', label: 'Dashboard', icon: '📊' },
+      { path: '/laboratory/orders', label: 'Manage Orders', icon: '📋' },
+      { path: '/laboratory/results', label: 'Test Results', icon: '🔬' },
+      { path: '/medical-history', label: 'Patient Records', icon: '👥' },
+      { path: '/admin/reports', label: 'Lab Reports', icon: '📈' },
+      { path: '/admin/settings', label: 'Lab Settings', icon: '⚙️' },
+    ],
+    laboratory: [
+      { path: '/lab/dashboard', label: 'Dashboard', icon: '📊' },
+      { path: '/laboratory/orders', label: 'Manage Orders', icon: '📋' },
+      { path: '/laboratory/results', label: 'Test Results', icon: '🔬' },
+      { path: '/medical-history', label: 'Patient Records', icon: '👥' },
+      { path: '/admin/reports', label: 'Lab Reports', icon: '📈' },
+      { path: '/admin/settings', label: 'Lab Settings', icon: '⚙️' },
+    ],
   };
 
   const links = navigationLinks[role] || navigationLinks.patient;
@@ -63,6 +79,7 @@ const Sidebar = () => {
           {role === 'doctor' && '👨‍⚕️ Doctor Portal'}
           {role === 'admin' && '🔐 Admin Panel'}
           {role === 'pharmacy' && '💊 Pharmacy System'}
+          {(role === 'lab' || role === 'laboratory') && '🔬 Lab Dashboard'}
           {role === 'patient' && '🏥 Patient Portal'}
         </h3>
       </div>

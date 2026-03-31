@@ -125,7 +125,7 @@ function App() {
             <Route path="/dashboard" element={<RoleDashboardRedirect />} />
           
           {/* Patient Routes */}
-          <Route element={<RoleBasedRoute allowedRoles={['patient']} />}>
+          <Route element={<RoleBasedRoute allowedRoles={['patient', 'admin']} />}>
             <Route path="/patient/dashboard" element={<PatientDashboard />} />
             <Route path="/simple-profile" element={<SimpleProfile />} />
             <Route path="/profile" element={<PatientProfile />} />
@@ -168,7 +168,7 @@ function App() {
           </Route>
 
           {/* Doctor Routes */}
-          <Route element={<RoleBasedRoute allowedRoles={['doctor']} />}>
+          <Route element={<RoleBasedRoute allowedRoles={['doctor', 'admin']} />}>
             <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor/patients" element={<DoctorPatientsList />} />
             <Route path="/doctor/patients/:patientId" element={<PatientProfile />} />
@@ -187,7 +187,7 @@ function App() {
           </Route>
 
           {/* Lab Routes */}
-          <Route element={<RoleBasedRoute allowedRoles={['lab', 'laboratory']} />}>
+          <Route element={<RoleBasedRoute allowedRoles={['lab', 'laboratory', 'admin']} />}>
             <Route path="/lab/dashboard" element={<LaboratoryDashboard />} />
             <Route path="/laboratory/dashboard" element={<LaboratoryDashboard />} />
             <Route path="/lab/test-bookings" element={<LaboratoryDashboard />} />
@@ -197,7 +197,7 @@ function App() {
           </Route>
 
           {/* Pharmacy Routes */}
-          <Route element={<RoleBasedRoute allowedRoles={['pharmacy']} />}>
+          <Route element={<RoleBasedRoute allowedRoles={['pharmacy', 'admin']} />}>
             <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
             <Route path="/pharmacy/prescriptions" element={<Prescriptions />} />
             <Route path="/pharmacy/prescriptions/:prescriptionId" element={<Prescriptions />} />

@@ -48,13 +48,13 @@ const LaboratoryDashboard = () => {
 
         setResults([]);
       } else {
-        const [ordersRes, resultsRes] = await Promise.all([
+        const [ordersRes, resultsRes] = await Promise.allSettled([
           laboratoryService.getPatientOrders(),
           laboratoryService.getPatientResults()
         ]);
 
-        const orderList = ordersRes?.success ? ordersRes.data || [] : [];
-        const resultList = resultsRes?.success ? resultsRes.data || [] : [];
+        const orderList = ordersRes.status === 'fulfilled' && ordersRes.value?.success ? ordersRes.value.data || [] : [];
+        const resultList = resultsRes.status === 'fulfilled' && resultsRes.value?.success ? resultsRes.value.data || [] : [];
 
         setOrders(orderList);
         setResults(resultList);
@@ -71,8 +71,11 @@ const LaboratoryDashboard = () => {
         }
       }
     } catch (error) {
-      console.error('Dashboard fetch error:', error);
-      toast.error(error?.message || 'Failed to load laboratory dashboard data');
+      console.error('Laboratory Dashboard error:', error);
+      // Don't show toast for 404/501 as we have mock fallbacks in service
+      if (error?.status !== 404 && error?.status !== 501) {
+        toast.error(error?.message || 'Failed to load laboratory data');
+      }
     } finally {
       setLoading(false);
     }

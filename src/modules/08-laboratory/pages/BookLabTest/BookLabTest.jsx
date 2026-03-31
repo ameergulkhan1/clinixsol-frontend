@@ -41,27 +41,26 @@ const BookLabTest = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [testsRes, categoriesRes] = await Promise.all([
+      const [testsRes, categoriesRes, labsRes] = await Promise.allSettled([
         laboratoryService.getAllTests(),
-        laboratoryService.getTestCategories()
+        laboratoryService.getTestCategories(),
+        laboratoryService.getAvailableLabs()
       ]);
 
-      const labsRes = await laboratoryService.getAvailableLabs();
-
-      if (isSuccessResponse(testsRes)) {
-        setTests(asArray(testsRes.data));
+      if (testsRes.status === 'fulfilled' && isSuccessResponse(testsRes.value)) {
+        setTests(asArray(testsRes.value.data));
       } else {
         setTests([]);
       }
 
-      if (isSuccessResponse(categoriesRes)) {
-        setCategories(asArray(categoriesRes.data));
+      if (categoriesRes.status === 'fulfilled' && isSuccessResponse(categoriesRes.value)) {
+        setCategories(asArray(categoriesRes.value.data));
       } else {
         setCategories([]);
       }
 
-      if (isSuccessResponse(labsRes)) {
-        const allLabs = asArray(labsRes.data);
+      if (labsRes.status === 'fulfilled' && isSuccessResponse(labsRes.value)) {
+        const allLabs = asArray(labsRes.value.data);
         setLabs(allLabs);
         if (allLabs.length > 0) {
           setSelectedLabId(allLabs[0]._id);
@@ -69,7 +68,7 @@ const BookLabTest = () => {
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      toast.error('Failed to load lab tests');
+      toast.error('Failed to load lab data');
     } finally {
       setLoading(false);
     }
