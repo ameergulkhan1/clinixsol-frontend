@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../../context/AuthContext';
 import pharmacyService from '../../../../modules/09-pharmacy/services/pharmacyService';
+import { formatPKRSimple } from '../../../../utils/currencyFormatter';
 import './PharmacyDashboard.css';
 
 const PharmacyDashboard = () => {
@@ -128,12 +129,7 @@ const PharmacyDashboard = () => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
+    return formatPKRSimple(amount);
   };
 
   const formatTime = (dateString) => {

@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import doctorService from '../../services/doctorService';
 import Button from '../../components/common/Button/Button';
 import Loader from '../../components/common/Loader/Loader';
+import { formatPKRSimple } from '../../utils/currencyFormatter';
 import './DoctorProfile.css';
 
 const DoctorProfile = ({ onBookAppointment }) => {
@@ -170,7 +171,7 @@ const DoctorProfile = ({ onBookAppointment }) => {
               )}
               <div className="stat-item">
                 <span className="stat-icon">💰</span>
-                <span className="stat-text">₹{consultationFee} Consultation Fee</span>
+                <span className="stat-text">{formatPKRSimple(consultationFee)} Consultation Fee</span>
               </div>
             </div>
 

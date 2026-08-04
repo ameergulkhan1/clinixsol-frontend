@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import laboratoryService from '../../services/laboratoryService';
 import Loader from '../../../../components/common/Loader/Loader';
+import LabTestCard from '../../components/LabTestCard/LabTestCard';
+import { formatPKRSimple } from '../../../../utils/currencyFormatter';
 import './BookLabTest.css';
 
 const BookLabTest = () => {
@@ -208,7 +210,7 @@ const BookLabTest = () => {
                     <p className="test-name">{test.testName}</p>
                     <p className="test-code">{test.testCode}</p>
                   </div>
-                  <div className="test-price">₹{test.price}</div>
+                  <div className="test-price">{formatPKRSimple(test.price)}</div>
                   <button 
                     className="btn-remove"
                     onClick={() => toggleTestSelection(test)}
@@ -220,7 +222,7 @@ const BookLabTest = () => {
             </div>
             <div className="total-amount">
               <span>Total Amount:</span>
-              <span className="amount">₹{calculateTotal()}</span>
+              <span className="amount">{formatPKRSimple(calculateTotal())}</span>
             </div>
           </div>
 
@@ -366,38 +368,40 @@ const BookLabTest = () => {
             className="btn-proceed"
             onClick={() => setShowBookingForm(true)}
           >
-            Proceed ({selectedTests.length} tests) - ₹{calculateTotal()}
+            Proceed ({selectedTests.length} tests) - {formatPKRSimple(calculateTotal())}
           </button>
         )}
       </div>
 
       <div className="filters-section">
-        <div className="search-box">
-          <select
-            className="search-input"
-            value={selectedLabId}
-            onChange={(e) => setSelectedLabId(e.target.value)}
-          >
-            <option value="">Select laboratory location</option>
-            {labs.map((lab) => (
-              <option key={lab._id} value={lab._id}>
-                {`${lab.labName}${lab.location ? ` - ${lab.location}` : ''}${lab.isVerified ? '' : ' (Unverified)'}`}
-              </option>
-            ))}
-          </select>
-        </div>
+        <div className="filter-row">
+          <div className="filter-group">
+            <label className="filter-label">Laboratory Location</label>
+            <select
+              className="lab-select"
+              value={selectedLabId}
+              onChange={(e) => setSelectedLabId(e.target.value)}
+            >
+              <option value="">Select laboratory location</option>
+              {labs.map((lab) => (
+                <option key={lab._id} value={lab._id}>
+                  {`${lab.labName}${lab.location ? ` - ${lab.location}` : ''}${lab.isVerified ? '' : ' (Unverified)'}`}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="search-box">
-          <svg className="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search tests..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="search-bar">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search tests by name or code..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
 
         <div className="category-filters">
@@ -426,51 +430,14 @@ const BookLabTest = () => {
       ) : (
         <div className="tests-grid">
           {filteredTests.map(test => {
-            const isSelected = selectedTests.find(t => t._id === test._id);
+            const isSelected = selectedTests.some(t => t._id === test._id);
             return (
-              <div 
-                key={test._id} 
-                className={`test-card ${isSelected ? 'selected' : ''}`}
-              >
-                <div className="test-header">
-                  <h3 className="test-title">{test.testName}</h3>
-                  <span className="test-code">{test.testCode}</span>
-                </div>
-                
-                <p className="test-description">{test.description}</p>
-
-                <div className="test-details">
-                  <div className="detail-item">
-                    <span className="detail-label">Category:</span>
-                    <span className="detail-value">{test.category}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Sample:</span>
-                    <span className="detail-value">{test.sampleType}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Turnaround:</span>
-                    <span className="detail-value">
-                      {test.turnaroundTime?.value || 'N/A'} {test.turnaroundTime?.unit || ''}
-                    </span>
-                  </div>
-                  {test.requiresFasting && (
-                    <div className="detail-item fasting-required">
-                      <span>⚠️ Fasting Required</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="test-footer">
-                  <span className="test-price">₹{test.price}</span>
-                  <button 
-                    className={`btn-select ${isSelected ? 'selected' : ''}`}
-                    onClick={() => toggleTestSelection(test)}
-                  >
-                    {isSelected ? '✓ Selected' : 'Select Test'}
-                  </button>
-                </div>
-              </div>
+              <LabTestCard
+                key={test._id}
+                test={test}
+                isSelected={isSelected}
+                onSelect={toggleTestSelection}
+              />
             );
           })}
         </div>

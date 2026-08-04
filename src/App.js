@@ -49,7 +49,6 @@ import DoctorPublicProfile from './pages/DoctorProfile/DoctorProfile';
 
 // Module 6: Telemedicine
 import VideoConsultation from './modules/06-telemedicine/pages/VideoConsultation/VideoConsultation';
-import ChatConsultation from './modules/06-telemedicine/pages/ChatConsultation/ChatConsultation';
 
 // Module 7: Prescription
 import CreatePrescription from './modules/07-prescription/pages/CreatePrescription/CreatePrescription';
@@ -59,26 +58,37 @@ import ViewPrescription from './modules/07-prescription/pages/ViewPrescription/V
 import BookLabTest from './modules/08-laboratory/pages/BookLabTest/BookLabTest';
 import TestResults from './modules/08-laboratory/pages/TestResults/TestResults';
 import LaboratoryDashboard from './modules/08-laboratory/pages/LaboratoryDashboard/LaboratoryDashboard';
+import ManageTests from './modules/08-laboratory/pages/ManageTests/ManageTests';
 
 // Module 9: Pharmacy
 import OrderMedicine from './modules/09-pharmacy/pages/OrderMedicine/OrderMedicine';
 import TrackOrder from './modules/09-pharmacy/pages/TrackOrder/TrackOrder';
 import Prescriptions from './modules/09-pharmacy/pages/Prescriptions/Prescriptions';
 import Inventory from './modules/09-pharmacy/pages/Inventory/Inventory';
+import Reports from './modules/09-pharmacy/pages/Reports/Reports';
 
 // Module 10: Communication
 import Messaging from './modules/10-communication/pages/Messaging/Messaging';
 import Notifications from './modules/10-communication/pages/Notifications/Notifications';
+import PatientRecordsSharing from './modules/10-communication/pages/PatientRecordsSharing/PatientRecordsSharing';
+import Collaboration from './modules/10-communication/pages/Collaboration/Collaboration';
 
 // Module 11: Admin Dashboard
 import Dashboard from './modules/11-admin-dashboard/pages/Dashboard/Dashboard';
 import DoctorDashboard from './modules/11-admin-dashboard/pages/DoctorDashboard/DoctorDashboard';
-import DoctorProfile from './modules/11-admin-dashboard/pages/DoctorProfile/DoctorProfile';
 import PharmacyDashboard from './modules/11-admin-dashboard/pages/PharmacyDashboard/PharmacyDashboard';
-import UserManagement from './modules/11-admin-dashboard/pages/UserManagement/UserManagement';
+import LabApprovals from './modules/11-admin-dashboard/pages/LabApprovals/LabApprovals';
+import Analytics from './modules/11-admin-dashboard/pages/Analytics/Analytics';
+import EnhancedUserManagement from './modules/11-admin-dashboard/pages/EnhancedUserManagement/EnhancedUserManagement';
+import SystemMonitoring from './modules/11-admin-dashboard/pages/SystemMonitoring/SystemMonitoring';
 
 // Module 12: Security
+import SecurityDashboard from './modules/12-security-compliance/pages/SecurityDashboard/SecurityDashboard';
 import AuditLogs from './modules/12-security-compliance/pages/AuditLogs/AuditLogs';
+import SecurityCompliance from './modules/12-security-compliance/pages/SecurityCompliance/SecurityCompliance';
+import SecuritySettings from './modules/12-security-compliance/pages/SecuritySettings/SecuritySettings';
+import UserSecurityProfiles from './modules/12-security-compliance/pages/UserSecurityProfiles/UserSecurityProfiles';
+import SecurityVulnerabilities from './modules/12-security-compliance/pages/SecurityVulnerabilities/SecurityVulnerabilities';
 
 // Home
 import Home from './pages/Home/Home.jsx';
@@ -151,12 +161,8 @@ function App() {
             <Route path="/patient/consultation/:id" element={<VideoConsultation />} />
             <Route path="/prescriptions" element={<ViewPrescription />} />
             <Route path="/patient/prescriptions" element={<ViewPrescription />} />
-            {/* Laboratory Routes - Updated for consistency */}
+            {/* Laboratory Booking Routes */}
             <Route path="/laboratory/book-test" element={<BookLabTest />} />
-            <Route path="/laboratory/results" element={<TestResults />} />
-            <Route path="/laboratory/results/:resultId" element={<TestResults />} />
-            <Route path="/laboratory/orders" element={<LaboratoryDashboard />} />
-            <Route path="/laboratory/orders/:orderId" element={<LaboratoryDashboard />} />
             {/* Legacy routes for backward compatibility */}
             <Route path="/lab-tests" element={<BookLabTest />} />
             <Route path="/patient/lab-tests" element={<BookLabTest />} />
@@ -184,16 +190,25 @@ function App() {
             <Route path="/doctor/schedule" element={<AppointmentList />} />
             <Route path="/doctor/profile" element={<PatientProfile />} />
             <Route path="/doctor/messages" element={<Messaging />} />
+            <Route path="/doctor/patient-records-sharing" element={<PatientRecordsSharing />} />
+            <Route path="/doctor/collaborations" element={<Collaboration />} />
           </Route>
 
           {/* Lab Routes */}
           <Route element={<RoleBasedRoute allowedRoles={['lab', 'laboratory', 'admin']} />}>
-            <Route path="/lab/dashboard" element={<LaboratoryDashboard />} />
             <Route path="/laboratory/dashboard" element={<LaboratoryDashboard />} />
-            <Route path="/lab/test-bookings" element={<LaboratoryDashboard />} />
-            <Route path="/lab/orders" element={<LaboratoryDashboard />} />
-            <Route path="/lab/upload-results" element={<TestResults />} />
-            <Route path="/lab/results" element={<TestResults />} />
+            <Route path="/laboratory/catalog" element={<ManageTests />} />
+            <Route path="/laboratory/results" element={<TestResults />} />
+            <Route path="/laboratory/patient-records" element={<LaboratoryDashboard />} />
+            <Route path="/laboratory/notifications" element={<LaboratoryDashboard />} />
+            <Route path="/laboratory/locations" element={<LaboratoryDashboard />} />
+            
+            {/* Legacy/Utility routes */}
+            <Route path="/laboratory/orders" element={<LaboratoryDashboard />} />
+            <Route path="/laboratory/orders/:orderId" element={<LaboratoryDashboard />} />
+            <Route path="/lab/dashboard" element={<Navigate to="/laboratory/dashboard" replace />} />
+            <Route path="/lab/orders" element={<Navigate to="/laboratory/orders" replace />} />
+            <Route path="/lab/results" element={<Navigate to="/laboratory/results" replace />} />
           </Route>
 
           {/* Pharmacy Routes */}
@@ -204,20 +219,29 @@ function App() {
             <Route path="/pharmacy/inventory" element={<Inventory />} />
             <Route path="/pharmacy/orders" element={<TrackOrder />} />
             <Route path="/pharmacy/track-delivery" element={<TrackOrder />} />
+            <Route path="/pharmacy/reports" element={<Reports />} />
           </Route>
 
           {/* Admin Routes */}
           <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>
             <Route path="/admin/dashboard" element={<Dashboard />} />
-            <Route path="/admin/users" element={<UserManagement />} />
-            <Route path="/admin/doctors" element={<UserManagement />} />
-            <Route path="/admin/patients" element={<UserManagement />} />
+            <Route path="/admin/users" element={<EnhancedUserManagement />} />
+            <Route path="/admin/doctors" element={<EnhancedUserManagement />} />
+            <Route path="/admin/patients" element={<EnhancedUserManagement />} />
             <Route path="/admin/appointments" element={<AppointmentList />} />
             <Route path="/admin/pharmacy" element={<PharmacyDashboard />} />
             <Route path="/admin/laboratory" element={<BookLabTest />} />
-            <Route path="/admin/reports" element={<Dashboard />} />
-            <Route path="/admin/settings" element={<UserManagement />} />
+            <Route path="/admin/lab-approvals" element={<LabApprovals />} />
+            <Route path="/admin/analytics" element={<Analytics />} />
+            <Route path="/admin/reports" element={<Analytics />} />
+            <Route path="/admin/system-monitoring" element={<SystemMonitoring />} />
+            <Route path="/admin/settings" element={<EnhancedUserManagement />} />
             <Route path="/admin/audit-logs" element={<AuditLogs />} />
+            <Route path="/admin/security-dashboard" element={<SecurityDashboard />} />
+            <Route path="/admin/security-compliance" element={<SecurityCompliance />} />
+            <Route path="/admin/security-settings" element={<SecuritySettings />} />
+            <Route path="/admin/user-security-profiles" element={<UserSecurityProfiles />} />
+            <Route path="/admin/security-vulnerabilities" element={<SecurityVulnerabilities />} />
           </Route>
 
             {/* Shared Routes */}

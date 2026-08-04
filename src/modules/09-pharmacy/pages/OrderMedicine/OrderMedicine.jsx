@@ -5,6 +5,7 @@ import { pharmacyService } from '../../services/pharmacyService';
 import { patientService } from '../../../02-patient-profile/services/patientService';
 import Button from '../../../../components/common/Button/Button';
 import Modal from '../../../../components/common/Modal/Modal';
+import { formatPKRSimple, formatAmount } from '../../../../utils/currencyFormatter';
 import './OrderMedicine.css';
 
 const OrderMedicine = () => {
@@ -345,7 +346,7 @@ const OrderMedicine = () => {
                 <div className="medicine-footer">
                   <div className="price-section">
                     <span className="price-label">Price:</span>
-                    <span className="price">₹{medicine.price}</span>
+                    <span className="price">{formatPKRSimple(medicine.price)}</span>
                   </div>
                   
                   {inCart ? (
@@ -416,7 +417,7 @@ const OrderMedicine = () => {
                   <div key={item._id} className="cart-item">
                     <div className="item-info">
                       <h4>{item.name}</h4>
-                      <p className="item-price">₹{item.price} x {item.quantity}</p>
+                      <p className="item-price">{formatPKRSimple(item.price)} x {item.quantity}</p>
                     </div>
                     <div className="item-actions">
                       <div className="quantity-controls-small">
@@ -449,7 +450,7 @@ const OrderMedicine = () => {
               <div className="cart-footer">
                 <div className="cart-total">
                   <span>Total:</span>
-                  <span className="total-amount">₹{calculateTotal()}</span>
+                  <span className="total-amount">{formatPKRSimple(calculateTotal())}</span>
                 </div>
                 <Button onClick={handleCheckout} className="checkout-btn">
                   Proceed to Checkout
@@ -473,12 +474,12 @@ const OrderMedicine = () => {
               {cart.map(item => (
                 <div key={item._id} className="summary-item">
                   <span>{item.name} x {item.quantity}</span>
-                  <span>₹{item.price * item.quantity}</span>
+                  <span>{formatPKRSimple(item.price * item.quantity)}</span>
                 </div>
               ))}
               <div className="summary-total">
                 <strong>Total:</strong>
-                <strong>₹{calculateTotal()}</strong>
+                <strong>{formatPKRSimple(calculateTotal())}</strong>
               </div>
             </div>
 

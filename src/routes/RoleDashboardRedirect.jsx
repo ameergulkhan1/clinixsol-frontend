@@ -23,7 +23,8 @@ const RoleDashboardRedirect = () => {
     admin: '/admin/dashboard',
     doctor: '/doctor/dashboard',
     pharmacy: '/pharmacy/dashboard',
-    lab: '/lab/test-bookings',
+    lab: '/laboratory/dashboard',
+    laboratory: '/laboratory/dashboard',
     patient: '/patient/dashboard' // Patients now have their own dashboard
   };
 

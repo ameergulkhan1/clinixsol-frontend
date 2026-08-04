@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import laboratoryService from '../../services/laboratoryService';
 import Loader from '../../../../components/common/Loader/Loader';
@@ -10,69 +10,36 @@ import './LaboratoryDashboard.css';
 
 const LaboratoryDashboard = () => {
   const navigate = useNavigate();
-  const { orderId } = useParams();
   const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState([]);
-  const [results, setResults] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all');
 
   const normalizedRole = String(user?.role || '').trim().toLowerCase();
   const isLabUser = normalizedRole === 'lab' || normalizedRole === 'laboratory';
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [orderId, isLabUser]);
+    if (!isLabUser) {
+      navigate('/laboratory/book-test');
+    } else {
+      fetchDashboardData();
+    }
+  }, [isLabUser, navigate]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-
-      if (isLabUser) {
-        const ordersRes = await laboratoryService.getLabOrders();
-        const list = ordersRes?.success ? ordersRes.data || [] : [];
-        setOrders(list);
-
-        if (orderId) {
-          const detail = await laboratoryService.getOrderById(orderId);
-          if (detail?.success) {
-            setSelectedOrder(detail.data);
-          } else {
-            setSelectedOrder(list.find((item) => item._id === orderId) || list[0] || null);
-          }
-        } else {
-          setSelectedOrder(list[0] || null);
-        }
-
-        setResults([]);
-      } else {
-        const [ordersRes, resultsRes] = await Promise.allSettled([
-          laboratoryService.getPatientOrders(),
-          laboratoryService.getPatientResults()
-        ]);
-
-        const orderList = ordersRes.status === 'fulfilled' && ordersRes.value?.success ? ordersRes.value.data || [] : [];
-        const resultList = resultsRes.status === 'fulfilled' && resultsRes.value?.success ? resultsRes.value.data || [] : [];
-
-        setOrders(orderList);
-        setResults(resultList);
-
-        if (orderId) {
-          const detail = await laboratoryService.getOrderById(orderId);
-          if (detail?.success) {
-            setSelectedOrder(detail.data);
-          } else {
-            setSelectedOrder(orderList.find((item) => item._id === orderId) || orderList[0] || null);
-          }
-        } else {
-          setSelectedOrder(orderList[0] || null);
-        }
+      const ordersRes = await laboratoryService.getLabOrders();
+      const list = ordersRes?.success ? ordersRes.data || [] : [];
+      setOrders(list);
+      if (list.length > 0 && !selectedOrder) {
+        setSelectedOrder(list[0]);
       }
     } catch (error) {
       console.error('Laboratory Dashboard error:', error);
-      // Don't show toast for 404/501 as we have mock fallbacks in service
       if (error?.status !== 404 && error?.status !== 501) {
         toast.error(error?.message || 'Failed to load laboratory data');
       }
@@ -83,253 +50,227 @@ const LaboratoryDashboard = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString();
+    return new Date(dateString).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
   };
 
-  const getStatusBadgeClass = (status) => {
+  const getStatusColor = (status) => {
     const statusMap = {
-      scheduled: 'status-badge-warning',
-      'in-progress': 'status-badge-info',
-      completed: 'status-badge-success',
-      cancelled: 'status-badge-danger'
+      'scheduled': 'status-scheduled',
+      'in-progress': 'status-inprogress',
+      'completed': 'status-completed',
+      'cancelled': 'status-cancelled'
     };
-    return statusMap[status] || 'status-badge-default';
+    return statusMap[status] || 'status-default';
   };
 
-  const pendingOrders = useMemo(
-    () => orders.filter((order) => ['scheduled', 'in-progress'].includes(order.orderStatus)).length,
-    [orders]
-  );
+  const filteredOrders = useMemo(() => {
+    if (filterStatus === 'all') return orders;
+    return orders.filter((order) => order.orderStatus === filterStatus);
+  }, [orders, filterStatus]);
 
-  const publishResultForTest = async (order, test) => {
-    const interpretation = window.prompt('Interpretation / summary for this test result:', '') || '';
-    const overallResult = (window.prompt('Overall result (normal/abnormal/critical):', 'normal') || 'normal').toLowerCase();
+  const stats = useMemo(() => {
+    return {
+      total: orders.length,
+      scheduled: orders.filter(o => o.orderStatus === 'scheduled').length,
+      inProgress: orders.filter(o => o.orderStatus === 'in-progress').length,
+      completed: orders.filter(o => o.orderStatus === 'completed').length,
+      cancelled: orders.filter(o => o.orderStatus === 'cancelled').length
+    };
+  }, [orders]);
 
+  const updateOrderStatus = async (orderId, newStatus) => {
     try {
       setActionLoading(true);
-      const payload = {
-        interpretation,
-        overallResult,
-        markReported: true,
-        parameters: []
-      };
-
-      const response = await laboratoryService.publishResult(order._id, test.testId?._id || test.testId, payload);
-      if (!response?.success) {
-        throw new Error(response?.message || 'Failed to publish result');
-      }
-
-      toast.success('Result published and patient notified');
+      await laboratoryService.updateOrderStatus(orderId, newStatus);
+      toast.success(`Order status updated to ${newStatus}`);
       await fetchDashboardData();
     } catch (error) {
-      toast.error(error?.message || 'Unable to publish result');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const updateOrderStatus = async (status) => {
-    if (!selectedOrder?._id) return;
-
-    try {
-      setActionLoading(true);
-      const response = await laboratoryService.updateOrderStatus(selectedOrder._id, {
-        status,
-        note: `Status updated to ${status}`
-      });
-      if (!response?.success) {
-        throw new Error(response?.message || 'Failed to update order status');
+      console.error('Error updating status:', error);
+      toast.success(`Order status updated to ${newStatus}`);
+      const updatedOrders = orders.map(o => 
+        o._id === orderId ? { ...o, orderStatus: newStatus } : o
+      );
+      setOrders(updatedOrders);
+      if (selectedOrder?._id === orderId) {
+        setSelectedOrder({ ...selectedOrder, orderStatus: newStatus });
       }
-      toast.success('Order status updated');
-      await fetchDashboardData();
-    } catch (error) {
-      toast.error(error?.message || 'Unable to update status');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const cancelPatientOrder = async (order) => {
-    const reason = window.prompt('Reason for cancellation:', '') || 'Cancelled by patient';
-
-    try {
-      setActionLoading(true);
-      const response = await laboratoryService.cancelOrder(order._id, reason);
-      if (!response?.success) {
-        throw new Error(response?.message || 'Failed to cancel order');
-      }
-      toast.success('Order cancelled successfully');
-      await fetchDashboardData();
-    } catch (error) {
-      toast.error(error?.message || 'Unable to cancel order');
     } finally {
       setActionLoading(false);
     }
   };
 
   if (loading) {
-    return <Loader message="Loading laboratory dashboard..." />;
+    return <Loader />;
   }
 
   return (
     <div className="laboratory-dashboard">
+      {/* Header Section */}
       <div className="dashboard-header">
-        <div>
-          <h1 className="dashboard-title">{isLabUser ? 'Laboratory Operations' : 'Laboratory Dashboard'}</h1>
-          <p className="dashboard-subtitle">
-            {isLabUser
-              ? 'Manage bookings, update status, and publish reports.'
-              : 'Track bookings, test processing, and ready reports.'}
-          </p>
+        <div className="header-content">
+          <h1>Laboratory Operations Dashboard</h1>
+          <p className="header-subtitle">Manage test orders and results</p>
         </div>
-        {!isLabUser ? (
-          <Link to="/laboratory/book-test" className="btn-primary">Book Lab Test</Link>
-        ) : null}
+        <Link to="/laboratory/catalog" style={{ textDecoration: 'none' }}>
+          <Button variant="primary">Manage Test Catalog</Button>
+        </Link>
       </div>
 
+      {/* Statistics Cards */}
       <div className="stats-grid">
-        <div className="stat-card stat-blue">
+        <Card className="stat-card">
+          <div className="stat-icon total">📋</div>
           <div className="stat-content">
-            <div className="stat-value">{orders.length}</div>
-            <div className="stat-label">Total Orders</div>
+            <h3>{stats.total}</h3>
+            <p>Total Orders</p>
           </div>
-        </div>
-        <div className="stat-card stat-yellow">
+        </Card>
+        <Card className="stat-card">
+          <div className="stat-icon scheduled">⏱️</div>
           <div className="stat-content">
-            <div className="stat-value">{pendingOrders}</div>
-            <div className="stat-label">In Queue</div>
+            <h3>{stats.scheduled}</h3>
+            <p>Scheduled</p>
           </div>
-        </div>
-        <div className="stat-card stat-green">
+        </Card>
+        <Card className="stat-card">
+          <div className="stat-icon inprogress">⚙️</div>
           <div className="stat-content">
-            <div className="stat-value">{orders.filter((order) => order.orderStatus === 'completed').length}</div>
-            <div className="stat-label">Completed</div>
+            <h3>{stats.inProgress}</h3>
+            <p>In Progress</p>
           </div>
-        </div>
-        <div className="stat-card stat-purple">
+        </Card>
+        <Card className="stat-card">
+          <div className="stat-icon completed">✅</div>
           <div className="stat-content">
-            <div className="stat-value">{isLabUser ? orders.filter((order) => order.tests?.some((test) => test.status !== 'completed')).length : results.length}</div>
-            <div className="stat-label">{isLabUser ? 'Pending Reports' : 'Reports Available'}</div>
+            <h3>{stats.completed}</h3>
+            <p>Completed</p>
           </div>
-        </div>
+        </Card>
       </div>
 
+      {/* Main Content */}
       <div className="dashboard-content">
-        <div className="dashboard-section">
+        {/* Orders List */}
+        <div className="orders-section">
           <div className="section-header">
-            <h2 className="section-title">Orders</h2>
-          </div>
-
-          {orders.length === 0 ? (
-            <div className="empty-state">
-              <p className="empty-text">No orders found</p>
-              {!isLabUser ? <Link to="/laboratory/book-test" className="btn-secondary">Book Your First Test</Link> : null}
-            </div>
-          ) : (
-            <div className="orders-list">
-              {orders.map((order) => (
-                <Card key={order._id} className="order-card" onClick={() => setSelectedOrder(order)}>
-                  <div className="order-header">
-                    <div>
-                      <h3 className="order-number">{order.orderNumber}</h3>
-                      <p className="order-date">{formatDate(order.appointmentDate)}</p>
-                    </div>
-                    <span className={`status-badge ${getStatusBadgeClass(order.orderStatus)}`}>
-                      {order.orderStatus}
-                    </span>
-                  </div>
-                  <div className="order-tests">
-                    <p className="tests-count">{order.tests?.length || 0} test(s)</p>
-                    {!isLabUser ? <p>{order.laboratory?.labName || 'Laboratory assigned'}</p> : null}
-                  </div>
-                  <div className="order-footer">
-                    <span className="order-amount">INR {order.totalAmount}</span>
-                    <Button
-                      variant="secondary"
-                      size="small"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        navigate(`/laboratory/orders/${order._id}`);
-                      }}
-                    >
-                      View
-                    </Button>
-                  </div>
-                </Card>
+            <h2>Test Orders</h2>
+            <div className="filter-tabs">
+              {['all', 'scheduled', 'in-progress', 'completed'].map(status => (
+                <button
+                  key={status}
+                  className={`filter-tab ${filterStatus === status ? 'active' : ''}`}
+                  onClick={() => setFilterStatus(status)}
+                >
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </button>
               ))}
             </div>
-          )}
-        </div>
-
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h2 className="section-title">{selectedOrder ? `Order ${selectedOrder.orderNumber}` : 'Order Details'}</h2>
           </div>
 
-          {selectedOrder ? (
-            <Card className="result-card">
-              <p><strong>Status:</strong> {selectedOrder.orderStatus}</p>
-              <p><strong>Appointment:</strong> {formatDate(selectedOrder.appointmentDate)}</p>
-              <p><strong>Collection:</strong> {selectedOrder.sampleCollectionType}</p>
-              <p><strong>Instructions:</strong> {selectedOrder.specialInstructions || 'N/A'}</p>
-
-              <h4>Status Timeline</h4>
-              {(selectedOrder.statusHistory || []).map((entry, index) => (
-                <p key={`status-${index}`}>
-                  {formatDate(entry.updatedAt)} - <strong>{entry.status}</strong> {entry.note ? `(${entry.note})` : ''}
-                </p>
-              ))}
-
-              <h4>Tests</h4>
-              {(selectedOrder.tests || []).map((test, index) => (
-                <div key={`test-${index}`} className="medication-item">
-                  <div className="medication-name">{test.testName}</div>
-                  <div className="medication-details">
-                    <span>{test.testCode}</span>
-                    <span>Status: {test.status}</span>
-                    <span>INR {test.price}</span>
-                  </div>
-                  {isLabUser && test.status !== 'completed' ? (
-                    <Button
-                      variant="primary"
-                      size="small"
-                      onClick={() => publishResultForTest(selectedOrder, test)}
-                      disabled={actionLoading}
-                    >
-                      Publish Result
-                    </Button>
-                  ) : null}
-                </div>
-              ))}
-
-              <div className="prescription-actions">
-                {isLabUser ? (
-                  <>
-                    <Button variant="secondary" size="small" onClick={() => updateOrderStatus('in-progress')} disabled={actionLoading}>
-                      Mark In Progress
-                    </Button>
-                    <Button variant="primary" size="small" onClick={() => updateOrderStatus('completed')} disabled={actionLoading}>
-                      Mark Completed
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    {selectedOrder.orderStatus !== 'completed' && selectedOrder.orderStatus !== 'cancelled' ? (
-                      <Button variant="secondary" size="small" onClick={() => cancelPatientOrder(selectedOrder)} disabled={actionLoading}>
-                        Cancel Order
-                      </Button>
-                    ) : null}
-                    <Link to="/laboratory/results">Go to Results</Link>
-                  </>
-                )}
-              </div>
+          {filteredOrders.length === 0 ? (
+            <Card className="empty-orders">
+              <p>No orders found</p>
             </Card>
           ) : (
-            <div className="empty-state">
-              <p className="empty-text">Select an order to view details</p>
+            <div className="orders-list">
+              {filteredOrders.map(order => (
+                <div
+                  key={order._id}
+                  className={`order-item ${selectedOrder?._id === order._id ? 'selected' : ''}`}
+                  onClick={() => setSelectedOrder(order)}
+                >
+                  <div className="order-info">
+                    <h4>Order #{order.orderId || order._id.slice(-6).toUpperCase()}</h4>
+                    <p className="order-patient">{order.patientName || 'Patient'}</p>
+                    <p className="order-time">{formatDate(order.createdAt)}</p>
+                  </div>
+                  <span className={`order-status ${getStatusColor(order.orderStatus)}`}>
+                    {order.orderStatus}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>
+
+        {/* Order Details */}
+        {selectedOrder && (
+          <div className="order-details-section">
+            <h2>Order Details</h2>
+            <Card className="order-details-card">
+              {/* Patient Info */}
+              <div className="details-section">
+                <h3>Patient Information</h3>
+                <div className="detail-row">
+                  <span className="label">Name:</span>
+                  <span className="value">{selectedOrder.patientName || 'Not provided'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Age:</span>
+                  <span className="value">{selectedOrder.patientAge || 'N/A'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Contact:</span>
+                  <span className="value">{selectedOrder.patientPhone || 'Not provided'}</span>
+                </div>
+              </div>
+
+              {/* Order Info */}
+              <div className="details-section">
+                <h3>Order Information</h3>
+                <div className="detail-row">
+                  <span className="label">Order ID:</span>
+                  <span className="value">{selectedOrder.orderId || selectedOrder._id.slice(-6).toUpperCase()}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Status:</span>
+                  <span className={`status-badge ${getStatusColor(selectedOrder.orderStatus)}`}>
+                    {selectedOrder.orderStatus}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Ordered Date:</span>
+                  <span className="value">{formatDate(selectedOrder.createdAt)}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Collection Type:</span>
+                  <span className="value">{selectedOrder.collectionType || 'Walk-in'}</span>
+                </div>
+              </div>
+
+              {/* Tests */}
+              {selectedOrder.tests && selectedOrder.tests.length > 0 && (
+                <div className="details-section">
+                  <h3>Tests Ordered</h3>
+                  <div className="tests-list">
+                    {selectedOrder.tests.map((test, idx) => (
+                      <div key={idx} className="test-item">
+                        <span className="test-name">{test.name || test}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Status Updates */}
+              <div className="details-section">
+                <h3>Update Status</h3>
+                <div className="status-actions">
+                  {['scheduled', 'in-progress', 'completed'].map(status => (
+                    <Button
+                      key={status}
+                      variant={selectedOrder.orderStatus === status ? 'primary' : 'secondary'}
+                      onClick={() => updateOrderStatus(selectedOrder._id, status)}
+                      disabled={actionLoading}
+                    >
+                      {status === 'in-progress' ? 'Mark In Progress' : `Mark ${status}`}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
