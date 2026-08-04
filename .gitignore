@@ -60,3 +60,15 @@ api.config.js
 *.bat
 *.sh
 *.ps1
+
+# Temporary lists created by cleanup
+__files_to_delete.txt
+__files_deleted_list.txt
+
+# Large frontend assets that should be stored externally
+public.zip
+src/assets/*.mp4
+
+# Local machine files
+Thumbs.db
+Desktop.ini
