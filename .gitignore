@@ -112,3 +112,6 @@ Icon?
 *.report
 *.audit
 
+
+.vercel
+.env*
