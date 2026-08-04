@@ -72,3 +72,43 @@ src/assets/*.mp4
 # Local machine files
 Thumbs.db
 Desktop.ini
+
+# Secrets and credentials
+.env
+.env.*
+.env.local
+.env.*.local
+secrets.*
+credentials.json
+client_secret.json
+serviceAccount*.json
+firebase*.json
+*.key
+*.pem
+*.p12
+*.pfx
+*.cert
+
+# Vercel local/cli
+.vercel
+.vercel/*
+
+# npm/yarn log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+.cache/
+/.parcel-cache
+.next/
+.expo/
+
+# OS files
+ehthumbs.db
+Icon?
+
+# Ignore exported reports and audit files
+*.report
+*.audit
+
